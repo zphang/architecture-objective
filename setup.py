@@ -54,7 +54,7 @@ setuptools.setup(
         'seqio-nightly',
         't5',
         'tensorflow',
-        'tensorstore',
+        'tensorstore==0.1.13',
         'promptsource'
     ],
     extras_require={
