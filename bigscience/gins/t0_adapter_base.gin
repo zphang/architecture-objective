@@ -5,7 +5,9 @@ from t5x import models
 from t5x import partitioning
 from t5x import trainer
 from t5x import utils
-import task
+import seqio
+
+import task # To import seqio task
 
 MIXTURE_OR_TASK_MODULE = "t5.data.mixtures"
 TRAIN_STEPS = 37768 # 32768 (pretrain) + 5000 (finetune)
@@ -46,3 +48,5 @@ partitioning.ModelBasedPjitPartitioner:
   model_parallel_submesh = (4,1,1,1)
 
 trainer.Trainer.num_microbatches = 16 # 2048 // 16
+
+seqio.Evaluator.use_memory_cache = False
