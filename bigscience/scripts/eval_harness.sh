@@ -9,8 +9,28 @@ else
   CHECKPOINT_STEP=32768
 fi
 
+if [[ $ORIGINAL_EXPERIMENT_NAME == c_dec* ]]
+then
+  MODEL_GIN_FILE=c_dec_xxl.gin
+fi
+if [[ $ORIGINAL_EXPERIMENT_NAME == nc_dec* ]]
+then
+  MODEL_GIN_FILE=nc_dec_xxl.gin
+fi
+if [[ $ORIGINAL_EXPERIMENT_NAME == enc_dec* ]]
+then
+  MODEL_GIN_FILE=enc_dec_xxl.gin
+fi
+if [[ $MODEL_GIN_FILE == "" ]]
+then
+  echo "Incorrect experiment name $ORIGINAL_EXPERIMENT_NAME, does not start with c_dec/nc_dec/enc_dec"
+  exit
+fi
+
+MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
+
 PYTHONPATH=$(pwd)/bigscience/gins python3 $(pwd)/t5x/eval_harness.py \
-   --gin_file_="bigscience/gins/c_dec_xxl.gin" \
+   --gin_file_="$MODEL_GIN_FILE" \
    --gin_file_="bigscience/gins/eval_harness.gin" \
    --gin.INFER_OUTPUT_DIR="'.'"  \
    --gin.DROPOUT_RATE=0.0 \
