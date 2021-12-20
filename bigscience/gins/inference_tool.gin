@@ -22,5 +22,4 @@ utils.RestoreCheckpointConfig:
   dtype = 'float32'
 
 partitioning.ModelBasedPjitPartitioner:
-  num_partitions = 1 # this argument is ignore in favor of model_parallel_submesh
-  model_parallel_submesh = (2, 2, 1, 1) # Trained using (4,1,1,1)
+  num_partitions = 4

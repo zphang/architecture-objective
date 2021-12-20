@@ -40,6 +40,6 @@ utils.SaveCheckpointConfig:
   keep = None # only keep one checkpoint
 
 partitioning.ModelBasedPjitPartitioner:
-  model_parallel_submesh = (4,1,1,1)
+  num_partitions = 4
 
 trainer.Trainer.num_microbatches = 8 # 2048 // 8
