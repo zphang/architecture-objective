@@ -46,7 +46,7 @@ utils.RestoreCheckpointConfig:
   dtype = 'bfloat16'
 
 partitioning.ModelBasedPjitPartitioner:
-  num_partitions = 8
+  model_parallel_submesh = (4,1,1,1)
 
 trainer.Trainer.num_microbatches = 32 # 2048 // 32
 

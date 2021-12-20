@@ -39,7 +39,8 @@ infer_script.create_task_from_tuples:
   vocab = %VOCABULARY
 
 partitioning.ModelBasedPjitPartitioner:
-  num_partitions = 2
+  num_partitions = 4
+  model_parallel_submesh = (2,1,1,1)
 
 TASK_FEATURE_LENGTHS = {"inputs": 512, "targets": 114}
 
