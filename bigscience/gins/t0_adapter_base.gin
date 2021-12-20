@@ -11,7 +11,7 @@ import task # To import seqio task
 
 MIXTURE_OR_TASK_MODULE = "t5.data.mixtures"
 TRAIN_STEPS = 37768 # 32768 (pretrain) + 5000 (finetune)
-DROPOUT_RATE = 0.1 # TODO: Check this value
+DROPOUT_RATE = 0.1
 BATCH_SIZE = 2048
 
 train/utils.DatasetConfig:
@@ -48,6 +48,6 @@ utils.RestoreCheckpointConfig:
 partitioning.ModelBasedPjitPartitioner:
   model_parallel_submesh = (4,1,1,1)
 
-trainer.Trainer.num_microbatches = 32 # 2048 // 16
+trainer.Trainer.num_microbatches = 32 # 2048 // 32
 
 seqio.Evaluator.use_memory_cache = False
