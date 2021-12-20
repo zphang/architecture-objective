@@ -13,4 +13,4 @@ include "bigscience/gins/t0_adapter_base.gin" # This overrides some default conf
 TASK_FEATURE_LENGTHS = {"inputs": 1024, "targets": 256}
 MIXTURE_OR_TASK_NAME = "d4_train" # We need to install prompt source and actually import it
 
-trainer.Trainer.num_microbatches = 64 # 2048 // 64
+trainer.Trainer.num_microbatches = 128 # 2048 // 128
