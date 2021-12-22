@@ -29,5 +29,5 @@ models.EncoderDecoderModel.feature_converter_cls = @seqio.PassThroughFeatureConv
 
 MIXTURE_OR_TASK_NAME = "c4_prefix_lm_objective_encoder_decoder_architecture"
 
-trainer.Trainer.num_microbatches = 16
+trainer.Trainer.num_microbatches = 32
 
