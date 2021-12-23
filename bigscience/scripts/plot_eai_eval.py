@@ -72,8 +72,8 @@ def main():
     subprocess.run(["mkdir", "-p", results_dir])
 
     # Update data locally
-    # gsutil rsync -rd gs://bigscience-t5x/arc_objective_exps_v2/eai_eval ../results/eai_eval
-    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arc_objective_exps_v2/eai_eval", results_dir])
+    # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/eai_eval ../results/eai_eval
+    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/eai_eval", results_dir])
 
     # Load data
     data = load_data(results_dir)
