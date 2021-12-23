@@ -24,23 +24,23 @@ def load_t5x_results(dir_path: Path):
 
 def main():
     # Define directories
-    results_dir = Path(__file__).resolve().parent.parent / "results"
+    results_dir = Path(__file__).resolve().parent.parent / "results" / "t0_eval"
     t0_results_dir = results_dir / "t0"
     t5x_results_dir = results_dir / "t5x"
     subprocess.run(["mkdir", "-p", t0_results_dir])
     subprocess.run(["mkdir", "-p", t5x_results_dir])
 
     # Sync previous results
-    # gsutil cp gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv ../results/t0
+    # gsutil cp gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv ../results/t0_eval/t0
     subprocess.run(["gsutil", "cp", "gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv", t0_results_dir])
-    # gsutil rsync -rd gs://bigscience-t5x/arc_objective_exps_v2/t0_eval ../results/t5x
+    # gsutil rsync -rd gs://bigscience-t5x/arc_objective_exps_v2/t0_eval ../results/t0_eval/t5x
     subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arc_objective_exps_v2/t0_eval", t5x_results_dir])
 
-    # load results
+    # Load results
     t0_data = load_t0_results(t0_results_dir / "all_datasets_and_runs.csv")
     t5x_data = load_t5x_results(t5x_results_dir)
 
-    # get tasks list
+    # Get tasks list
     tasks = {
         'super_glue_copa': 'COPA',
         'anli_r1': 'ANLI R1',
