@@ -9,9 +9,14 @@ def load_t0_results(csv_path):
         return list(csv.DictReader(f))
 
 def load_t5x_results(dir_path: Path):
+    def get_experiment_name(filename):
+        name = filename.split("_t0_eval_")[0]
+        name = name.replace("_bs2048", "")
+        return name
+
     all_results = {}
     for child in dir_path.iterdir():
-        child_name = child.name
+        child_name = get_experiment_name(child.name)
         with open(child / "results.json", "r") as fi:
             results = json.load(fi)
         all_results[child_name] = results
