@@ -5,7 +5,7 @@ from t5x import utils
 import seqio
 from promptsource import seqio_tasks
 
-include "bigscience/gins/c_dec_xxl.gin"
+include "bigscience/gins/nc_dec_xxl.gin"
 include "t5x/configs/runs/finetune.gin"
 include "bigscience/gins/t0_adapter_base.gin" # This overrides some default config in `t5x/configs/runs/finetune.gin`
 
