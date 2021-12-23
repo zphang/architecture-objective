@@ -30,7 +30,7 @@ fi
 MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
 EVAL_OUTPUT_DIR=gs://bigscience-t5x/arch_objective_exps_v2/eai_eval/"$EXPERIMENT_NAME".json
 
-PYTHONPATH=$(pwd)/bigscience/gins python3 $(pwd)/t5x/eval_harness.py \
+HF_DATASETS_OFFLINE=1 PYTHONPATH=$(pwd)/bigscience/gins python3 $(pwd)/t5x/eval_harness.py \
    --gin_file_="$MODEL_GIN_FILE" \
    --gin_file_="bigscience/gins/eval_harness.gin" \
    --gin.INFER_OUTPUT_DIR="'.'"  \

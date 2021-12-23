@@ -21,6 +21,7 @@ r"""This script runs inference-evaluation on a T5X-compatible model.
 # pylint:enable=line-too-long
 
 import functools
+import json
 import os
 from typing import Sequence, Type
 
@@ -31,6 +32,7 @@ from absl import logging
 os.environ['FLAX_PROFILE'] = 'true'
 import jax
 import seqio
+import tensorflow as tf
 from t5x import models
 from t5x import multihost_utils
 from t5x import partitioning
@@ -78,6 +80,9 @@ def evaluate(*,
   # SeqIO (inference-based) evaluation setup
   # ----------------------------------------------------------------------------
   # Init evaluator to set up cached datasets
+  log_dir = os.path.join(output_dir, 'inference_eval')
+  if not log_dir.startswith("gs://"):
+    os.makedirs(log_dir, exist_ok=True)
   evaluator = inference_evaluator_cls(
       mixture_or_task_name=dataset_cfg.mixture_or_task_name,
       feature_converter=model.FEATURE_CONVERTER_CLS(pack=False),  # pytype:disable=not-instantiable
@@ -85,7 +90,7 @@ def evaluate(*,
       use_cached=dataset_cfg.use_cached,
       seed=dataset_cfg.seed,
       sequence_length=dataset_cfg.task_feature_lengths,
-      log_dir=os.path.join(output_dir, 'inference_eval'))
+      log_dir=log_dir)
   if not evaluator.eval_tasks:
     raise ValueError(
         f"'{dataset_cfg.mixture_or_task_name}' has no metrics for evaluation.")
@@ -136,7 +141,14 @@ def evaluate(*,
         step=int(train_state.step),
         predict_fn=functools.partial(predict_fn, train_state=train_state),
         score_fn=functools.partial(score_fn, train_state=train_state))
-    all_metrics.result()  # Ensure metrics are finished being computed.
+
+    all_metrics = all_metrics.result()
+    logging.info(f"Results:\n{json.dumps(all_metrics, indent=2)}") # Ensure metrics are finished being computed.
+    results_path = f"{output_dir}/results.json"
+    with tf.io.gfile.GFile(f"{results_path}.tmp", "w") as f:
+        f.write(json.dumps(all_metrics, indent= 2))
+        f.write("\n")
+    tf.io.gfile.rename(f"{results_path}.tmp", results_path, overwrite=True)
     # Wait until computations are done before continuing.
     multihost_utils.sync_devices(f'step_{train_state.step}:complete')
 
