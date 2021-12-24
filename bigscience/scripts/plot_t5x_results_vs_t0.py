@@ -114,7 +114,7 @@ def main():
         t5x_scores = [[s["accuracy"] for k, s in t5x_data[name].items() if task.replace("anli_", "") in k]
                       for name in t5x_experiments]
         for i, scores in enumerate([t5lm_scores, t0_scores, *t5x_scores]):
-            axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.2)
+            axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.4)
         axs[n].set_title(name)
     axs[10].legend(["T5+LM", "T0", *t5x_experiments], bbox_to_anchor=(1, 1), loc="upper left")
     axs[11].set_visible(False)
