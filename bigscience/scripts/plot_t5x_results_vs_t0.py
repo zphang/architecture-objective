@@ -1,4 +1,5 @@
 import csv
+import functools
 import json
 import subprocess
 import matplotlib.pyplot as plt
@@ -33,8 +34,8 @@ def main():
     # Sync previous results
     # gsutil cp gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv ../results/t0_eval/t0
     subprocess.run(["gsutil", "cp", "gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv", t0_results_dir])
-    # gsutil rsync -rd gs://bigscience-t5x/arc_objective_exps_v2/t0_eval ../results/t0_eval/t5x
-    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arc_objective_exps_v2/t0_eval", t5x_results_dir])
+    # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/t0_eval ../results/t0_eval/t5x
+    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/t0_eval", t5x_results_dir])
 
     # Load results
     t0_data = load_t0_results(t0_results_dir / "all_datasets_and_runs.csv")
@@ -59,6 +60,46 @@ def main():
     fig, axs = plt.subplots(2, 6, figsize=(20, 8))
     axs = axs.flatten()
     t5x_experiments = list(t5x_data.keys()) # defined single ordering
+    # We group experiments by:
+    #  - objective
+    #  - architecture
+    def key_architecture(x):
+        if x[0] == 'c':
+            return 0
+        elif x[0] == 'n':
+            return 1
+        elif x[0] == 'e':
+            return 2
+        else:
+            raise NotImplementedError
+    #
+    #
+    # def compare_experiments(x: str, y: str):
+    #     def compa
+    #     if x.endswith("lm_bs2048"):
+    #         if y.endswith("lm_bs2048"):
+    #             compare_experiments()
+    #         else:
+    #             return -1
+    #
+    # t5x_experiments = [sorted(t5x_experiments, key=functools.cmp_to_key(compare_experiments))
+    #                    ]
+    t5x_experiments = [
+        # All lm models
+        *sorted([exp for exp in t5x_experiments if exp.endswith("lm")], key=key_architecture),
+        # All span_corruption_models lm adapted
+        # TODO: make it available for other lm_adapt
+        *sorted([exp for exp in t5x_experiments if exp.endswith("lm_adapt_30000")], key=key_architecture),
+        # All LM + T0 adapted models
+        *sorted([exp for exp in t5x_experiments if exp.endswith("lm_t0_adapt_32768")], key=key_architecture),
+        # All span_corruption + T0 adapted models
+        *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_t0_adapt_32768")], key=key_architecture),
+        # All span_corruption + LM adapt + T0 adapted models
+        # TODO: make it available for other lm_adapt
+        *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_lm_adapt_30000_t0_adapt_32768")],
+                key=key_architecture),
+    ]
+
     for n, (task, name) in enumerate(tasks.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
                        if r["runs"] == "xxl-lm-d4-091621"
@@ -73,7 +114,7 @@ def main():
         t5x_scores = [[s["accuracy"] for k, s in t5x_data[name].items() if task.replace("anli_", "") in k]
                       for name in t5x_experiments]
         for i, scores in enumerate([t5lm_scores, t0_scores, *t5x_scores]):
-            axs[n].scatter([i] * len(scores), scores, s=200, alpha=0.2)
+            axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.2)
         axs[n].set_title(name)
     axs[10].legend(["T5+LM", "T0", *t5x_experiments], bbox_to_anchor=(1, 1), loc="upper left")
     axs[11].set_visible(False)
