@@ -1,6 +1,7 @@
 import csv
 import functools
 import json
+import re
 import subprocess
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -10,18 +11,31 @@ def load_t0_results(csv_path):
         return list(csv.DictReader(f))
 
 def load_t5x_results(dir_path: Path):
-    def get_experiment_name(filename):
+    def remove_t0_eval(filename:str):
         name = filename.split("_t0_eval_")[0]
         name = name.replace("_bs2048", "")
+        name = name.replace("_c4", "")
         return name
 
     all_results = {}
     for child in dir_path.iterdir():
-        child_name = get_experiment_name(child.name)
         with open(child / "results.json", "r") as fi:
             results = json.load(fi)
-        all_results[child_name] = results
+        all_results[remove_t0_eval(child.name)] = results
+    print(all_results.keys())
     return all_results
+
+def get_experiment_name(filename: str):
+    name = filename.replace("span_corruption", "SC")
+    name = name.replace("full_lm", "FLM")
+    name = name.replace("prefix_lm", "PLM")
+    name = name.replace("t0_adapt_32768", "T0")
+    name = re.sub(r"lm_adapt_([0-9]*)", "LM", name)
+    name = name.replace("enc_dec", "ED")
+    name = name.replace("nc_dec", "NCD")
+    name = name.replace("c_dec", 'CD')
+    name = name.replace("_", " + ")
+    return name
 
 def main():
     # Define directories
@@ -72,18 +86,6 @@ def main():
             return 2
         else:
             raise NotImplementedError
-    #
-    #
-    # def compare_experiments(x: str, y: str):
-    #     def compa
-    #     if x.endswith("lm_bs2048"):
-    #         if y.endswith("lm_bs2048"):
-    #             compare_experiments()
-    #         else:
-    #             return -1
-    #
-    # t5x_experiments = [sorted(t5x_experiments, key=functools.cmp_to_key(compare_experiments))
-    #                    ]
     t5x_experiments = [
         # All lm models
         *sorted([exp for exp in t5x_experiments if exp.endswith("lm")], key=key_architecture),
@@ -99,7 +101,6 @@ def main():
         *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_lm_adapt_30000_t0_adapt_32768")],
                 key=key_architecture),
     ]
-
     for n, (task, name) in enumerate(tasks.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
                        if r["runs"] == "xxl-lm-d4-091621"
@@ -116,7 +117,7 @@ def main():
         for i, scores in enumerate([t5lm_scores, t0_scores, *t5x_scores]):
             axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.4)
         axs[n].set_title(name)
-    axs[10].legend(["T5+LM", "T0", *t5x_experiments], bbox_to_anchor=(1, 1), loc="upper left")
+    axs[10].legend(["T5+LM", "T0", *[get_experiment_name(exp) for exp in t5x_experiments]], bbox_to_anchor=(1, 1), loc="upper left")
     axs[11].set_visible(False)
     # plt.plot()
     plt.show()
