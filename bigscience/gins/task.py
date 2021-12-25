@@ -16,36 +16,6 @@ seqio.add_global_cache_dirs([
 
 TaskRegistry = seqio.TaskRegistry
 
-def full_lm(dataset, sequence_length, output_features):
-    """Full language modeling objective"""
-    ds = dataset
-    ds = select_random_chunk(ds, output_features=output_features, feature_key='targets', max_length=65536)
-    ds = seqio.preprocessors.append_eos(ds, output_features)
-    ds = reduce_concat_tokens(ds, feature_key='targets', batch_size=128)
-    ds = split_tokens(ds, max_tokens_per_segment=sequence_length['targets'])
-    # ds = trim_and_pad_dataset(ds, sequence_length) # I feel this should be interesting, we should use `split_tokens_to_targets_length`
-    return ds
-
-TaskRegistry.add(
-    "c4_v220_full_lm",
-    source=seqio.TfdsDataSource(tfds_name="c4/en:2.2.0"),
-    preprocessors=[
-        functools.partial(
-            preprocessors.rekey, key_map={
-                "inputs": None,
-                "targets": "text"
-            }),
-        seqio.preprocessors.tokenize,
-        seqio.CacheDatasetPlaceholder(),
-        full_lm,
-    ],
-    output_features={
-        "targets": seqio.Feature(
-            vocabulary=get_default_vocabulary(), add_eos=True)
-    },
-    metric_fns=[])
-
-
 T5X_T0_EVAL = {
     # COPA
     "super_glue_copa_C1_or_C2_premise_so_because_",
