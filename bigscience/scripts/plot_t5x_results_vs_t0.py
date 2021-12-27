@@ -27,13 +27,18 @@ def load_t5x_results(dir_path: Path):
 
 def get_experiment_name(filename: str):
     name = filename.replace("span_corruption", "SC")
+    name = re.sub(r"^enc_dec", "ED", name)
+    name = re.sub(r"^nc_dec", "NCD", name)
+    name = re.sub(r"^c_dec", 'CD', name)
     name = name.replace("full_lm", "FLM")
     name = name.replace("prefix_lm", "PLM")
-    name = name.replace("t0_adapt_32768", "T0")
-    name = re.sub(r"lm_adapt_([0-9]*)", "LM", name)
-    name = name.replace("enc_dec", "ED")
-    name = name.replace("nc_dec", "NCD")
-    name = name.replace("c_dec", 'CD')
+    name = re.sub(r"t0_adapt_([0-9]*)", r"T0(\1)", name)
+    if name[:3] == "CD_":
+        name = re.sub(r"lm_adapt_([0-9]*)", r"FLM(\1)", name)
+    elif name[:4] == "NCD_" or name[:3] == "ED_":
+        name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
+    else:
+        raise NotImplementedError
     name = name.replace("_", " + ")
     return name
 
@@ -86,20 +91,29 @@ def main():
             return 2
         else:
             raise NotImplementedError
+    LM_ADAPT_FROM = [28000, 30000]
     t5x_experiments = [
         # All lm models
         *sorted([exp for exp in t5x_experiments if exp.endswith("lm")], key=key_architecture),
         # All span_corruption_models lm adapted
-        # TODO: make it available for other lm_adapt
-        *sorted([exp for exp in t5x_experiments if exp.endswith("lm_adapt_30000")], key=key_architecture),
+        *[
+            exp
+            for lm_adapt in LM_ADAPT_FROM
+            for exp in sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}")], key=key_architecture)
+
+        ],
         # All LM + T0 adapted models
         *sorted([exp for exp in t5x_experiments if exp.endswith("lm_t0_adapt_32768")], key=key_architecture),
         # All span_corruption + T0 adapted models
         *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_t0_adapt_32768")], key=key_architecture),
         # All span_corruption + LM adapt + T0 adapted models
-        # TODO: make it available for other lm_adapt
-        *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_lm_adapt_30000_t0_adapt_32768")],
-                key=key_architecture),
+        *[
+             exp
+             for lm_adapt in LM_ADAPT_FROM
+             for exp in
+             sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}_t0_adapt_{lm_adapt + 5000}")], key=key_architecture)
+
+        ]
     ]
     for n, (task, name) in enumerate(tasks.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
