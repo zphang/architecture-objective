@@ -27,6 +27,7 @@ then
   exit
 fi
 
+EXPERIMENT_NAME=$ORIGINAL_EXPERIMENT_NAME"_eai_eval_"$CHECKPOINT_STEP
 MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
 EVAL_OUTPUT_DIR=gs://bigscience-t5x/arch_objective_exps_v2/eai_eval/"$EXPERIMENT_NAME".json
 
