@@ -111,7 +111,7 @@ def main():
              exp
              for lm_adapt in LM_ADAPT_FROM
              for exp in
-             sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}_t0_adapt_{lm_adapt + 5000}")], key=key_architecture)
+             sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}_t0_adapt_32768")], key=key_architecture)
 
         ]
     ]
