@@ -35,11 +35,11 @@ MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
 echo "Running the following config: $MODEL_GIN_FILE" 2>&1 | tee $LOGS_PATH/pretrain_$EXPERIMENT_NAME.txt
 LOCAL_MODEL_DIR=/home/thomas/model_dir
 
-python3 ${T5X_DIR}/t5x/train.py \
+python3 ${T5X_DIR}/bigscience/scripts/inference_tool.py \
   --gin_file="$MODEL_GIN_FILE" \
   --gin_file="bigscience/gins/inference_tool.gin" \
   --gin.MODEL_DIR="'${LOCAL_MODEL_DIR}'" \
   --gin.INITIAL_CHECKPOINT_PATH="'${CHECKPOINT_DIR}'" \
     2>&1 | tee -a $LOGS_PATH/pretrain_$EXPERIMENT_NAME.txt
 
-# sh bigscience/scripts/lm_adapt.sh c_dec_c4_span_corruption_bs_128 420000
+# sh bigscience/scripts/infer.sh {CHECKPOINT_DIR}
