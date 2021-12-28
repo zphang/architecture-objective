@@ -12,9 +12,10 @@ def get_args():
     parser.add_argument('--all', action="store_true", help="Plot all results in a single plot")
     parser.add_argument('--per-arch', action="store_true", help="Plot results grouped by architectures")
     parser.add_argument('--per-objective', action="store_true", help="Plots results grouped by objectives")
+    parser.add_argument('--per-t0-adapted', action="store_true", help="Plots only T0 adapted models")
     args = parser.parse_args()
 
-    assert args.all or args.per_arch or args.per_objective
+    assert args.all or args.per_arch or args.per_objective or args.per_t0_adapted
 
     return args
 
@@ -118,16 +119,16 @@ def main():
     #  - objective
     #  - architecture
     LM_ADAPT_FROM = [28000, 30000]
-    def key_architecture(x):
-        if x[0] == 'c':
+    def key_architecture(experiment_name):
+        if experiment_name[0] == 'c':
             return 0
-        elif x[0] == 'n':
+        elif experiment_name[0] == 'n':
             return 1
-        elif x[0] == 'e':
+        elif experiment_name[0] == 'e':
             return 2
         else:
             raise NotImplementedError
-    def key_objective(x):
+    def key_objective(experiment_name):
         suffixes = [
             "lm",
             *[f"lm_adapt_{lm_adapt}" for lm_adapt in LM_ADAPT_FROM],
@@ -136,9 +137,9 @@ def main():
             *[f"lm_adapt_{lm_adapt}_t0_adapt_32768" for lm_adapt in LM_ADAPT_FROM]
         ]
         for i, suffix in enumerate(suffixes):
-            if x.endswith(suffix):
+            if experiment_name.endswith(suffix):
                 return i
-        raise NotImplementedError(f"{x}")
+        raise NotImplementedError(f"{experiment_name}")
 
     t5x_experiments = list(t5x_data.keys())
     # Define single ordering
@@ -156,6 +157,10 @@ def main():
         plot_per_group(key_objective)
     if args.per_arch:
         plot_per_group(key_architecture)
+    if args.per_t0_adapted:
+        def key_is_t0_adapted(experiment_name):
+            return experiment_name.endswith("t0_adapt_32768")
+        plot_per_group(key_is_t0_adapted)
 
     plt.show()
     print("Finished")
