@@ -4,9 +4,11 @@ import seqio
 from ..gins import task
 
 def main():
+    ranking_task = "super_glue_cb_GPT_3_style_score_eval"
+    assert ranking_task.endswith("score_eval")
     ds = utils.get_dataset(
         utils.DatasetConfig(
-            "anli_does_it_follow_that_r1_score_eval",
+            ranking_task,
             task_feature_lengths={"inputs": 1024, "targets": 256},
             split="validation",
             batch_size=1,
@@ -30,7 +32,6 @@ def main():
             print(sample["inputs_pretokenized"])
             print(f"Expected label: {sample['targets_pretokenized']}")
             input()
-    pass
 
 if __name__ == "__main__":
     main()
