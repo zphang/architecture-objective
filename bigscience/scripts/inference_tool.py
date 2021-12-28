@@ -50,13 +50,12 @@ def infer(
     output_features = {
         "text": seqio.Feature(vocabulary=vocabulary, add_eos=True),
     }
-    # restore_checkpoint_config = utils.RestoreCheckpointConfig()
 
-    if restore_checkpoint_config.path.startswith("gs://"):
-        print(f"Please download the checkpoint locally first. "
-              f"`gsutil cp {restore_checkpoint_config.path} $CHECKPOINT_PATH`. "
-              f"You can then run the script by add `gin.utils.RestoreCheckpointConfig=\"'$CHECKPOINT_PATH'\"`")
-        return
+    # if restore_checkpoint_config.path.startswith("gs://"):
+    #     print(f"Please download the checkpoint locally first. "
+    #           f"`gsutil cp {restore_checkpoint_config.path} $CHECKPOINT_PATH`. "
+    #           f"You can then run the script by add `gin.utils.RestoreCheckpointConfig=\"'$CHECKPOINT_PATH'\"`")
+    #     return
 
     # Initialize optimizer from the existing checkpoint.
     if isinstance(model, DecoderOnlyModel):
