@@ -21,13 +21,13 @@ if [[ $EXPERIMENT_NAME == nc_dec* ]]
 then
   MODEL_GIN_FILE=nc_dec_xxl.gin
 fi
-if [[ $ORIGINAL_EXPERIMENT_NAME == enc_dec* ]]
+if [[ $EXPERIMENT_NAME == enc_dec* ]]
 then
   MODEL_GIN_FILE=enc_dec_xxl.gin
 fi
 if [[ $MODEL_GIN_FILE == "" ]]
 then
-  echo "Incorrect experiment name $ORIGINAL_EXPERIMENT_NAME, does not start with c_dec/nc_dec/enc_dec"
+  echo "Incorrect experiment name $EXPERIMENT_NAME, does not start with c_dec/nc_dec/enc_dec"
   exit
 fi
 
