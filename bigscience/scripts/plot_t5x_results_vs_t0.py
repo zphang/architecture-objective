@@ -1,10 +1,22 @@
 import csv
-import functools
 import json
 import re
 import subprocess
+from argparse import ArgumentParser
+
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+def get_args():
+    parser = ArgumentParser()
+    parser.add_argument('--all', action="store_true", help="Plot all results in a single plot")
+    parser.add_argument('--per-arch', action="store_true", help="Plot results grouped by architectures")
+    parser.add_argument('--per-objective', action="store_true", help="Plots results grouped by objectives")
+    args = parser.parse_args()
+
+    assert args.all or args.per_arch or args.per_objective
+
+    return args
 
 def load_t0_results(csv_path):
     with open(csv_path, "r") as f:
@@ -42,80 +54,26 @@ def get_experiment_name(filename: str):
     name = name.replace("_", " + ")
     return name
 
-def main():
-    # Define directories
-    results_dir = Path(__file__).resolve().parent.parent / "results" / "t0_eval"
-    t0_results_dir = results_dir / "t0"
-    t5x_results_dir = results_dir / "t5x"
-    subprocess.run(["mkdir", "-p", t0_results_dir])
-    subprocess.run(["mkdir", "-p", t5x_results_dir])
+TASKS = {
+    'super_glue_copa': 'COPA',
+    'anli_r1': 'ANLI R1',
+    'anli_r2': 'ANLI R2',
+    'anli_r3': 'ANLI R3',
+    'super_glue_cb': 'CB',
+    'super_glue_rte': 'RTE',
+    'super_glue_wsc.fixed': 'WSC',
+    'winogrande_winogrande_xl': 'Winogrande',
+    'super_glue_wic': 'WiC',
+    'hellaswag': 'HellaSwag',
+    'story_cloze_2016': 'StoryCloze',
+}
+def plot(t5x_data, t0_data):
+    t5x_data, t5x_experiments = t5x_data
 
-    # Sync previous results
-    # gsutil cp gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv ../results/t0_eval/t0
-    subprocess.run(["gsutil", "cp", "gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv", t0_results_dir])
-    # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/t0_eval ../results/t0_eval/t5x
-    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/t0_eval", t5x_results_dir])
-
-    # Load results
-    t0_data = load_t0_results(t0_results_dir / "all_datasets_and_runs.csv")
-    t5x_data = load_t5x_results(t5x_results_dir)
-
-    # Get tasks list
-    tasks = {
-        'super_glue_copa': 'COPA',
-        'anli_r1': 'ANLI R1',
-        'anli_r2': 'ANLI R2',
-        'anli_r3': 'ANLI R3',
-        'super_glue_cb': 'CB',
-        'super_glue_rte': 'RTE',
-        'super_glue_wsc.fixed': 'WSC',
-        'winogrande_winogrande_xl': 'Winogrande',
-        'super_glue_wic': 'WiC',
-        'hellaswag': 'HellaSwag',
-        'story_cloze_2016': 'StoryCloze',
-    }
-
-    # Plot results
     fig, axs = plt.subplots(2, 6, figsize=(20, 8))
     axs = axs.flatten()
-    t5x_experiments = list(t5x_data.keys()) # defined single ordering
-    # We group experiments by:
-    #  - objective
-    #  - architecture
-    def key_architecture(x):
-        if x[0] == 'c':
-            return 0
-        elif x[0] == 'n':
-            return 1
-        elif x[0] == 'e':
-            return 2
-        else:
-            raise NotImplementedError
-    LM_ADAPT_FROM = [28000, 30000]
-    t5x_experiments = [
-        # All lm models
-        *sorted([exp for exp in t5x_experiments if exp.endswith("lm")], key=key_architecture),
-        # All span_corruption_models lm adapted
-        *[
-            exp
-            for lm_adapt in LM_ADAPT_FROM
-            for exp in sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}")], key=key_architecture)
 
-        ],
-        # All LM + T0 adapted models
-        *sorted([exp for exp in t5x_experiments if exp.endswith("lm_t0_adapt_32768")], key=key_architecture),
-        # All span_corruption + T0 adapted models
-        *sorted([exp for exp in t5x_experiments if exp.endswith("span_corruption_t0_adapt_32768")], key=key_architecture),
-        # All span_corruption + LM adapt + T0 adapted models
-        *[
-             exp
-             for lm_adapt in LM_ADAPT_FROM
-             for exp in
-             sorted([exp for exp in t5x_experiments if exp.endswith(f"lm_adapt_{lm_adapt}_t0_adapt_32768")], key=key_architecture)
-
-        ]
-    ]
-    for n, (task, name) in enumerate(tasks.items()):
+    for n, (task, name) in enumerate(TASKS.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
                        if r["runs"] == "xxl-lm-d4-091621"
                        and r["dataset_name"] == task
@@ -133,7 +91,72 @@ def main():
         axs[n].set_title(name)
     axs[10].legend(["T5+LM", "T0", *[get_experiment_name(exp) for exp in t5x_experiments]], bbox_to_anchor=(1, 1), loc="upper left")
     axs[11].set_visible(False)
-    # plt.plot()
+
+def main():
+    args = get_args()
+
+    # Define directories
+    results_dir = Path(__file__).resolve().parent.parent / "results" / "t0_eval"
+    t0_results_dir = results_dir / "t0"
+    t5x_results_dir = results_dir / "t5x"
+    subprocess.run(["mkdir", "-p", t0_results_dir])
+    subprocess.run(["mkdir", "-p", t5x_results_dir])
+
+    # Sync previous results
+    # gsutil cp gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv ../results/t0_eval/t0
+    if not (t0_results_dir / "all_datasets_and_runs.csv").exists():
+        subprocess.run(["gsutil", "cp", "gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv", t0_results_dir])
+    # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/t0_eval ../results/t0_eval/t5x
+    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/t0_eval", t5x_results_dir])
+
+    # Load results
+    t0_data = load_t0_results(t0_results_dir / "all_datasets_and_runs.csv")
+    t5x_data = load_t5x_results(t5x_results_dir)
+
+    # Plot results
+    # We group experiments by:
+    #  - objective
+    #  - architecture
+    LM_ADAPT_FROM = [28000, 30000]
+    def key_architecture(x):
+        if x[0] == 'c':
+            return 0
+        elif x[0] == 'n':
+            return 1
+        elif x[0] == 'e':
+            return 2
+        else:
+            raise NotImplementedError
+    def key_objective(x):
+        suffixes = [
+            "lm",
+            *[f"lm_adapt_{lm_adapt}" for lm_adapt in LM_ADAPT_FROM],
+            "lm_t0_adapt_32768",
+            "span_corruption_t0_adapt_32768",
+            *[f"lm_adapt_{lm_adapt}_t0_adapt_32768" for lm_adapt in LM_ADAPT_FROM]
+        ]
+        for i, suffix in enumerate(suffixes):
+            if x.endswith(suffix):
+                return i
+        raise NotImplementedError(f"{x}")
+
+    t5x_experiments = list(t5x_data.keys())
+    # Define single ordering
+    t5x_experiments = sorted(t5x_experiments, key=lambda x: (key_objective(x), key_architecture(x)))
+
+    if args.all:
+        plot((t5x_data, t5x_experiments), t0_data)
+
+    def plot_per_group(group_fn):
+        t5x_objective_keys = set(group_fn(x) for x in t5x_experiments)
+        for group_id in t5x_objective_keys:
+            t5x_experiments_per_group = [x for x in t5x_experiments if group_id == group_fn(x)]
+            plot((t5x_data, t5x_experiments_per_group), t0_data)
+    if args.per_objective:
+        plot_per_group(key_objective)
+    if args.per_arch:
+        plot_per_group(key_architecture)
+
     plt.show()
     print("Finished")
 
