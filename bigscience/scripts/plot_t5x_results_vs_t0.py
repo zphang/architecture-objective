@@ -78,7 +78,7 @@ def plot(t5x_data, t0_data):
     axs = axs.flatten()
 
     task_median_score = {}
-    for n, (task, (name, random_baseline)) in enumerate(TASKS.items()):
+    for n, (task, (task_name, random_baseline)) in enumerate(TASKS.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
                        if r["runs"] == "xxl-lm-d4-091621"
                        and r["dataset_name"] == task
@@ -89,21 +89,26 @@ def plot(t5x_data, t0_data):
                      and r["dataset_name"] == task
                      and r["metric_name"] == "accuracy (Rank)"
                      and r["score"]]
-        t5x_scores = [[s["accuracy"] for k, s in t5x_data[name].items() if task.replace("anli_", "") in k]
-                      for name in t5x_experiments]
+        t5x_scores_with_name = [
+            (
+                get_experiment_name(name),
+                [s["accuracy"] for k, s in t5x_data[name].items() if task.replace("anli_", "") in k]
+            )
+            for name in t5x_experiments
+        ]
 
+        all_experiment_scores_with_name = [("T5 + LM", t5lm_scores), ("T0", t0_scores), *t5x_scores_with_name]
         # Plot
-        axs[n].axhline(100 * random_baseline, 0, len([t5lm_scores, t0_scores, *t5x_scores]))
-        for i, scores in enumerate([t5lm_scores, t0_scores, *t5x_scores]):
-            axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.4)
-        axs[n].set_title(name)
+        axs[n].axhline(100 * random_baseline, 0, len(all_experiment_scores_with_name), label="Random")
+        for i, (exp_name, scores) in enumerate(all_experiment_scores_with_name):
+            axs[n].scatter([i] * len(scores), scores, s=50, alpha=0.4, label=exp_name)
+        axs[n].set_title(task_name)
 
         # Gather median values
-        task_median_score[task] = [random_baseline] + [np.median(scores) for scores in [t5lm_scores, t0_scores, *t5x_scores]]
+        task_median_score[task] = [("Random", random_baseline)] + [(exp_name, np.median(scores)) for (exp_name, scores) in all_experiment_scores_with_name]
 
     last_ax_id = len(TASKS) - 1
-    axs[last_ax_id].legend(["T5+LM", "T0", *[get_experiment_name(exp) for exp in t5x_experiments]],
-                           bbox_to_anchor=(1, 1), loc="upper left")
+    axs[last_ax_id].legend(bbox_to_anchor=(1, 1), loc="upper left")
     for ax in axs[last_ax_id + 1:]:
         ax.set_visible(False)
 
@@ -113,14 +118,23 @@ def plot(t5x_data, t0_data):
     last_ax_id = 0
 
     # Plot average task median score
-    average_task_media_score = np.mean(list(task_median_score.values()), axis=0)
-    axs[last_ax_id].axhline(100 * average_task_media_score[0], 0, len(average_task_media_score) -1)
-    for i, score in enumerate(average_task_media_score[1:]):
-        axs[last_ax_id].scatter(i, score, s=50)
+    experiment_names = [elt[0] for elt in next(iter(task_median_score.values()))]
+    average_task_media_score = np.mean([[scores for _, scores in scores_with_name] for scores_with_name in task_median_score.values()], axis=0)
+    assert len(experiment_names) == len(average_task_media_score)
+    print(average_task_media_score)
+    average_task_media_score_with_name = list(zip(experiment_names, average_task_media_score))
+    del average_task_media_score
+    del experiment_names
+    axs[last_ax_id].axhline(
+        100 * average_task_media_score_with_name[0][1],
+        0, len(average_task_media_score_with_name) -1,
+        label=average_task_media_score_with_name[0][0]
+    )
+    for i, (name, score) in enumerate(average_task_media_score_with_name[1:]):
+        axs[last_ax_id].scatter(i, score, s=50, label=name)
     axs[last_ax_id].set_title("Average of task median scores")
 
-    axs[last_ax_id].legend(["Random", "T5+LM", "T0", *[get_experiment_name(exp) for exp in t5x_experiments]],
-                           bbox_to_anchor=(1, 1), loc="upper left")
+    axs[last_ax_id].legend(bbox_to_anchor=(1, 1), loc="upper left")
     for ax in axs[last_ax_id + 1:]:
         ax.set_visible(False)
 
