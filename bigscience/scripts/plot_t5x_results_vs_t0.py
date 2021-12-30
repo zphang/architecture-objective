@@ -144,7 +144,8 @@ def plot(t5x_data, t0_data):
         # Plot average of task median normalised scores `normalised_score = (score - random) / (1 - random)`
         median_normalised_scores = []
         for scores_with_name in task_median_score.values():
-            _, random_baseline = scores_with_name[0]
+            random_name, random_baseline = scores_with_name[0]
+            assert random_name == "Random"
             normalised_scores = [(scores - random_baseline) / (100 - random_baseline) for _, scores in scores_with_name]
             median_normalised_scores.append(normalised_scores)
         average_task_median_normalised_score = np.mean(median_normalised_scores, axis=0)
