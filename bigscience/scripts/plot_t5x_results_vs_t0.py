@@ -199,10 +199,14 @@ def main():
         suffixes = [
             "lm",
             *[f"lm_adapt_{lm_adapt}" for lm_adapt in LM_ADAPT_FROM],
-            "lm_t0_adapt_32768",
-            "span_corruption_t0_adapt_32768",
-            *[f"lm_adapt_{lm_adapt}_t0_adapt_32768" for lm_adapt in LM_ADAPT_FROM]
         ]
+        for t0_adapt_from in [32768, 65536]:
+            suffixes += [
+                f"lm_t0_adapt_{t0_adapt_from}",
+                f"span_corruption_t0_adapt_{t0_adapt_from}",
+                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}" for lm_adapt in LM_ADAPT_FROM]
+            ]
+
         for i, suffix in enumerate(suffixes):
             if experiment_name.endswith(suffix):
                 return i
@@ -226,7 +230,7 @@ def main():
         plot_per_group(key_architecture)
     if args.per_t0_adapted:
         def key_is_t0_adapted(experiment_name):
-            return experiment_name.endswith("t0_adapt_32768")
+            return "_t0_adapt_" in experiment_name
         plot_per_group(key_is_t0_adapted)
 
     plt.show()
