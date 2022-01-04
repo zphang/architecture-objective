@@ -28,7 +28,6 @@ popd
 
 git clone https://github.com/bigscience-workshop/promptsource.git
 pushd promptsource
-git checkout thomas/t5x
 pip3 install -r requirements.txt
 pip3 install --ignore-requires-python -e . #needed because `promptsource` forces the use of python 3.7
 popd
