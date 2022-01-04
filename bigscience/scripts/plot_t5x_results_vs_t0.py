@@ -29,7 +29,7 @@ def load_t0_results(csv_path):
 
 def load_t5x_results(dir_path: Path):
     def remove_t0_eval(filename:str):
-        name = filename.split("_t0_eval_")[0]
+        name = filename.replace("_t0_eval", "")
         name = name.replace("_bs2048", "")
         name = name.replace("_c4", "")
         return name
@@ -43,7 +43,8 @@ def load_t5x_results(dir_path: Path):
     return all_results
 
 def get_experiment_name(filename: str):
-    name = filename.replace("span_corruption", "SC")
+    name = re.sub(r"_([0-9]*)$", r" [\1]", filename)
+    name = name.replace("span_corruption", "SC")
     name = re.sub(r"^enc_dec", "ED", name)
     name = re.sub(r"^nc_dec", "NCD", name)
     name = re.sub(r"^c_dec", 'CD', name)
@@ -186,6 +187,8 @@ def main():
     #  - objective
     #  - architecture
     LM_ADAPT_FROM = [28000, 30000]
+    PRETRAIN_STEPS = [32768, 65536]
+    T0_ADAPT_STEPS = 5000
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
             return 0
@@ -196,15 +199,18 @@ def main():
         else:
             raise NotImplementedError
     def key_objective(experiment_name):
-        suffixes = [
-            "lm",
-            *[f"lm_adapt_{lm_adapt}" for lm_adapt in LM_ADAPT_FROM],
-        ]
-        for t0_adapt_from in [32768, 65536]:
+        suffixes = []
+        for max_steps in PRETRAIN_STEPS:
             suffixes += [
-                f"lm_t0_adapt_{t0_adapt_from}",
-                f"span_corruption_t0_adapt_{t0_adapt_from}",
-                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}" for lm_adapt in LM_ADAPT_FROM]
+                f"lm_{max_steps}",
+                *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
+            ]
+        for t0_adapt_from in PRETRAIN_STEPS:
+            max_steps = t0_adapt_from + T0_ADAPT_STEPS
+            suffixes += [
+                f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
+                f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
+                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
             ]
 
         for i, suffix in enumerate(suffixes):
