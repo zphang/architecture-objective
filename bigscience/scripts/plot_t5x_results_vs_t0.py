@@ -81,6 +81,8 @@ def plot(t5x_data, t0_data):
     fig, axs = plt.subplots(2, 6, figsize=(20, 8))
     axs = axs.flatten()
 
+    task_min_score = {}
+    task_max_score = {}
     task_median_score = {}
     for n, (task, (task_name, random_baseline)) in enumerate(TASKS.items()):
         t5lm_scores = [float(r["score"]) for r in t0_data
@@ -109,6 +111,8 @@ def plot(t5x_data, t0_data):
         axs[n].set_title(task_name)
 
         # Gather median values
+        task_min_score[task] = [("Random", 100 * random_baseline)] + [(exp_name, np.min(scores)) for (exp_name, scores) in all_experiment_scores_with_name]
+        task_max_score[task] = [("Random", 100 * random_baseline)] + [(exp_name, np.max(scores)) for (exp_name, scores) in all_experiment_scores_with_name]
         task_median_score[task] = [("Random", 100 * random_baseline)] + [(exp_name, np.median(scores)) for (exp_name, scores) in all_experiment_scores_with_name]
 
     last_ax_id = len(TASKS) - 1
@@ -120,41 +124,62 @@ def plot(t5x_data, t0_data):
         # ====== Plot agregated values =======
         fig, axs = plt.subplots(1, 3, figsize=(20, 8))
         axs = axs.flatten()
-        last_ax_id = 0
+        last_ax_id=0
         experiment_names = [elt[0] for elt in next(iter(task_median_score.values()))]
 
-        def plot_scores_with_name(score_with_name, ax, title):
+        def plot_scores_with_name(median_score_with_name, max_score, min_score, ax, title):
+            assert len(median_score_with_name) == len(max_score) and len(median_score_with_name) == len(min_score)
             ax.axhline(
-                score_with_name[0][1],
-                0, len(score_with_name) - 1,
-                label=score_with_name[0][0]
+                median_score_with_name[0][1],
+                0, len(median_score_with_name) - 1,
+                label=median_score_with_name[0][0]
             )
-            for i, (name, score) in enumerate(score_with_name[1:]):
-                ax.scatter(i, score, s=50, label=name)
+            for i, ((name, median_score), max_score, min_score) in enumerate(zip(median_score_with_name[1:], max_score[1:], min_score[1:])):
+                ax.errorbar(i, median_score, ((median_score - min_score,), (max_score - median_score,)), fmt="o",label=name)
             ax.set_title(title)
 
+        def get_average_normalised_score(task_scores):
+            normalised_scores = []
+            for scores_with_name in task_scores.values():
+                random_name, random_baseline = scores_with_name[0]
+                assert random_name == "Random"
+                normalised_scores_per_task = [(scores - random_baseline) / (100 - random_baseline) for _, scores in
+                                              scores_with_name]
+                normalised_scores.append(normalised_scores_per_task)
+            return np.mean(normalised_scores, axis=0)
 
-        # Plot average task median score
-        average_task_median_score = np.mean([[scores for _, scores in scores_with_name] for scores_with_name in task_median_score.values()], axis=0)
+        def get_average_score(task_scores):
+            return np.mean(
+                [[scores for _, scores in scores_with_name] for scores_with_name in task_scores.values()], axis=0)
+
+        # Plot average task score
+        average_task_median_score = get_average_score(task_median_score)
         assert len(experiment_names) == len(average_task_median_score)
-        average_task_median_score_with_name = list(zip(experiment_names, average_task_median_score))
+        average_task_media_score_with_name = list(zip(experiment_names, average_task_median_score))
         del average_task_median_score
-        plot_scores_with_name(average_task_median_score_with_name, axs[last_ax_id], "Average of task median scores")
-        last_ax_id +=1
+        plot_scores_with_name(
+            median_score_with_name=average_task_media_score_with_name,
+            max_score=get_average_score(task_max_score),
+            min_score=get_average_score(task_min_score),
+            ax=axs[last_ax_id],
+            title=f"Average of task median scores"
+        )
+        last_ax_id += 1
 
         # Plot average of task median normalised scores `normalised_score = (score - random) / (1 - random)`
-        median_normalised_scores = []
-        for scores_with_name in task_median_score.values():
-            random_name, random_baseline = scores_with_name[0]
-            assert random_name == "Random"
-            normalised_scores = [(scores - random_baseline) / (100 - random_baseline) for _, scores in scores_with_name]
-            median_normalised_scores.append(normalised_scores)
-        average_task_median_normalised_score = np.mean(median_normalised_scores, axis=0)
-        assert len(experiment_names) == len(average_task_median_normalised_score)
-        average_task_median_normalised_score_with_name = list(zip(experiment_names, average_task_median_normalised_score))
-        del average_task_median_normalised_score
-        plot_scores_with_name(average_task_median_normalised_score_with_name, axs[last_ax_id], "Average of task median normalised scores")
-        last_ax_id +=1
+        average_task_normalised_median_score = get_average_normalised_score(task_median_score)
+        assert len(experiment_names) == len(average_task_normalised_median_score)
+        average_task_normalised_median_score_with_name = list(
+            zip(experiment_names, average_task_normalised_median_score))
+        del average_task_normalised_median_score
+        plot_scores_with_name(
+            median_score_with_name=average_task_normalised_median_score_with_name,
+            max_score=get_average_normalised_score(task_max_score),
+            min_score=get_average_normalised_score(task_min_score),
+            ax=axs[last_ax_id],
+            title=f"Average of task normalised median scores"
+        )
+        last_ax_id += 1
 
         axs[last_ax_id -1].legend(bbox_to_anchor=(1, 1), loc="upper left")
         for ax in axs[last_ax_id:]:
