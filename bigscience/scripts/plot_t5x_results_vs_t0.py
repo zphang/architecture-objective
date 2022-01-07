@@ -212,7 +212,7 @@ def main():
     #  - objective
     #  - architecture
     LM_ADAPT_FROM = [28000, 30000]
-    PRETRAIN_STEPS = [32768, 65536]
+    PRETRAIN_STEPS = [32768, 65536, 131072]
     T0_ADAPT_STEPS = 5000
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
