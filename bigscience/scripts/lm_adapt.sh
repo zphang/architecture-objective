@@ -27,6 +27,7 @@ then
   then
     GIN_FILE=c_dec_c4_lm_adapt.gin
   else
+    echo "Using opposite architecture"
     GIN_FILE=nc_dec_c4_lm_adapt.gin
     EXPERIMENT_NAME=$ORIGINAL_EXPERIMENT_NAME"_plm_adapt_"$CHECKPOINT_STEP
   fi
@@ -37,6 +38,7 @@ then
   then
     GIN_FILE=nc_dec_c4_lm_adapt.gin
   else
+    echo "Using opposite architecture"
     GIN_FILE=c_dec_c4_lm_adapt.gin
     EXPERIMENT_NAME=$ORIGINAL_EXPERIMENT_NAME"_flm_adapt_"$CHECKPOINT_STEP
   fi
