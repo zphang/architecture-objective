@@ -137,7 +137,9 @@ def plot(t5x_data, t0_data):
                 label=median_score_with_name[0][0]
             )
             for i, ((name, median_score), max_score, min_score) in enumerate(zip(median_score_with_name[1:], max_score[1:], min_score[1:])):
-                ax.errorbar(i, median_score, ((median_score - min_score,), (max_score - median_score,)), fmt="o",label=name)
+                ax.errorbar(
+                    i, median_score, ((median_score - min_score,), (max_score - median_score,)),
+                    fmt="o", elinewidth=1, label=name)
             ax.set_title(title)
 
         def get_average_normalised_score(task_scores):
