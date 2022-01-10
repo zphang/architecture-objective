@@ -38,6 +38,11 @@ pushd t5x
 pip3 install -e .
 popd
 
+git clone https://github.com/EleutherAI/lm-evaluation-harness.git
+pushd lm-evaluation-harness
+pip3 install -e .
+popd
+
 
 # TODO: figure if this is actually important
 sudo rm /usr/local/lib/python3.8/dist-packages/tensorflow/core/kernels/libtfkernel_sobol_op.so
