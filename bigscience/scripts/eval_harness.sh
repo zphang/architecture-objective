@@ -38,4 +38,4 @@ HF_DATASETS_OFFLINE=1 PYTHONPATH=$(pwd)/bigscience/gins python3 $(pwd)/t5x/eval_
    --gin.DROPOUT_RATE=0.0 \
    --gin.CHECKPOINT_PATH="'gs://bigscience-t5x/arch_objective_exps_v2/$ORIGINAL_EXPERIMENT_NAME/checkpoint_$CHECKPOINT_STEP'" \
    --results_path $EVAL_OUTPUT_DIR \
-   --tasks=arc_challenge,arc_easy,boolq,copa,headqa,hellaswag,lambada,logiqa,mathqa,mc_taco,mrpc,multirc,openbookqa,piqa,prost,pubmedqa,qnli,qqp,race,rte,sciq,sst,triviaqa,webqs,wic,winogrande,wnli,wsc
+   --tasks=arc_challenge,arc_easy,boolq,copa,headqa_en,hellaswag,lambada,logiqa,mathqa,mc_taco,mrpc,multirc,openbookqa,piqa,prost,pubmedqa,qnli,qqp,race,rte,sciq,sst,triviaqa,webqs,wic,winogrande,wnli,wsc

@@ -17,18 +17,11 @@
 r"""This script runs inference on a T5X-compatible model.
 
 """
-# pyformat: enable
-# pylint:enable=line-too-long
-from functools import partial
-import concurrent.futures
 import functools
-import hashlib
 import json
 import os
 import re
-import shutil
-import time
-from typing import Any, Callable, Iterator, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Iterator, Sequence, Tuple
 import task
 
 from absl import logging
@@ -36,7 +29,6 @@ import jax
 import jax.numpy as jnp
 import seqio
 from t5x import models
-from t5x import multihost_utils
 from t5x import partitioning
 from t5x import utils
 from t5x.infer import create_task_from_tfexample_file
@@ -272,12 +264,13 @@ def eval_task(active_tasks, output_path, create_task_func, infer_func):
   
   results = evaluator.evaluate(adaptor, tasks.get_task_dict(active_tasks), False, 0, None)
 
-  results_dump = json.dumps(results, indent=2)
-  logging.info(f"Results:\n{results_dump}")  # Ensure metrics are finished being computed.
-  with tf.io.gfile.GFile(f"{output_path}.tmp", "w") as f:
-      f.write(results_dump)
-      f.write("\n")
-  tf.io.gfile.rename(f"{output_path}.tmp", output_path, overwrite=True)
+  if jax.process_index() == 0:
+      results_dump = json.dumps(results, indent=2)
+      logging.info(f"Results:\n{results_dump}")  # Ensure metrics are finished being computed.
+      with tf.io.gfile.GFile(f"{output_path}.tmp", "w") as f:
+          f.write(results_dump)
+          f.write("\n")
+      tf.io.gfile.rename(f"{output_path}.tmp", output_path, overwrite=True)
 
 if __name__ == '__main__':
   # pylint:disable=g-import-not-at-top

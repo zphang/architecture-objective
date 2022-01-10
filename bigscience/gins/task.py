@@ -1,12 +1,8 @@
 import functools
 
 import seqio
-from t5.data import preprocessors, get_default_vocabulary
-from t5.data.preprocessors import select_random_chunk, reduce_concat_tokens, split_tokens
 
 from promptsource import seqio_tasks
-
-from t5x.partitioning import LogicalAxisRules
 
 # --- Seqio ---
 seqio.add_global_cache_dirs([
