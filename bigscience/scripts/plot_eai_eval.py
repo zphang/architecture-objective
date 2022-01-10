@@ -83,9 +83,9 @@ def normalise_score(score, evaluation_name, metric_name):
         raise ValueError(f"{key} doesn't have a random baseline set yet.")
     return (score - RANDOM_BASELINE[key]) / (1 - RANDOM_BASELINE[key])
 
-def plot_tasks(data, evaluation_metrics, normalised):
+def plot_tasks(data, evaluation_metrics):
     fig, axs = plt.subplots(3, 10)
-    agg_fig, agg_axs = plt.subplots(1,2)
+    agg_fig, agg_axs = plt.subplots(1,3)
     axs = axs.flatten()
     agg_axs = agg_axs.flatten()
 
@@ -103,7 +103,13 @@ def plot_tasks(data, evaluation_metrics, normalised):
     agg_axs[0].axhline(
         np.mean(list(RANDOM_BASELINE.values())),
         0, len(data),
-        label = "Random"
+        label="Random"
+    )
+    agg_axs[1].set_title("Normalised average")
+    agg_axs[1].axhline(
+        0,
+        0, len(data),
+        label="Random"
     )
 
     # sort experiments
@@ -146,25 +152,25 @@ def plot_tasks(data, evaluation_metrics, normalised):
     for i, experiment_key in enumerate(sorted_experiment_keys):
         experiment_name = get_experiment_name(experiment_key)
         experiment = data[experiment_key]
-        if normalised:
-            scores = [
-                normalise_score(experiment[evaluation_name][metric_name], evaluation_name, metric_name)
-                for (evaluation_name, metric_name) in evaluation_metrics
-            ]
-        else:
-            scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name) in evaluation_metrics]
+        scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name) in evaluation_metrics]
+        normalised_score = [
+            normalise_score(experiment[evaluation_name][metric_name], evaluation_name, metric_name)
+            for (evaluation_name, metric_name) in evaluation_metrics
+        ]
 
         for j, score in enumerate(scores):
             axs[j].scatter(i, score, s=50, alpha=0.4, label=experiment_name)
 
         agg_axs[0].scatter(i, np.mean(scores), s=50, alpha=0.4, label=experiment_name)
+        agg_axs[1].scatter(i, np.mean(normalised_score), s=50, alpha=0.4, label=experiment_name)
 
     last_ax_id = len(evaluation_metrics) -1
     axs[last_ax_id].legend(bbox_to_anchor=(1, 1), loc="upper left")
     for ax in axs[last_ax_id + 1:]:
         ax.set_visible(False)
-    agg_axs[0].legend(bbox_to_anchor=(1, 1), loc="upper left")
-    agg_axs[1].set_visible(False)
+    agg_axs[1].legend(bbox_to_anchor=(1, 1), loc="upper left")
+    for ax in agg_axs[2:]:
+        ax.set_visible(False)
 
 def plot_bar(data, evaluation_metrics, normalised):
     ind = np.arange(len(evaluation_metrics))
@@ -245,7 +251,7 @@ def main():
     # Plot data
     # plot_bar(data, evaluation_metrics, args.normalised)
 
-    plot_tasks(data, evaluation_metrics, args.normalised)
+    plot_tasks(data, evaluation_metrics)
     plt.show()
 
 if __name__ == "__main__":
