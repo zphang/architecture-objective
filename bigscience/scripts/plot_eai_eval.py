@@ -15,24 +15,27 @@ def get_args():
     return parser.parse_args()
 
 def load_data(dir_path: Path):
-    def get_experiment_name(filename):
+    def remove_eai_eval(filename):
         name, empty = filename.rsplit(".json", maxsplit=1)
         assert empty == ""
+        name = name.replace("_eai_eval", "")
         name = name.replace("_bs2048", "")
         name = name.replace("_c4", "")
         return name
 
     all_results = {}
     for child in dir_path.iterdir():
-        child_name = get_experiment_name(child.name)
+        child_name = remove_eai_eval(child.name)
         with open(child, "r") as fi:
             results = json.load(fi)["results"]
         all_results[child_name] = results
 
+    print(all_results.keys())
     return all_results
 
 def get_experiment_name(key: str):
-    name = key.replace("span_corruption", "SC")
+    name = re.sub(r"_([0-9]*)$", r" [\1]", key)
+    name = name.replace("span_corruption", "SC")
     name = re.sub(r"^enc_dec", "ED", name)
     name = re.sub(r"^nc_dec", "NCD", name)
     name = re.sub(r"^c_dec", 'CD', name)
@@ -54,6 +57,7 @@ RANDOM_BASELINE={
     "boolq_acc": 0.5,
     "copa_acc": 0.5,
     "headqa_acc": 0.25,
+    "headqa_en_acc": 0.25,
     "hellaswag_acc": 0.25,
     "lambada_acc": 0., # Safe to say that random models won't perform well at all.
     "logiqa_acc": 0.25,
@@ -115,6 +119,7 @@ def plot_tasks(data, evaluation_metrics):
     # sort experiments
     LM_ADAPT_FROM = [28000, 30000]
     PRETRAIN_STEPS = [32768, 65536, 131072]
+    T0_ADAPT_STEPS = 5000
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
             return 0
@@ -127,20 +132,18 @@ def plot_tasks(data, evaluation_metrics):
 
     def key_objective(experiment_name):
         suffixes = []
-        suffixes += [
-            f"lm",
-            *[f"lm_adapt_{lm_adapt}" for lm_adapt in LM_ADAPT_FROM],
-        ]
         for max_steps in PRETRAIN_STEPS:
             suffixes += [
                 f"lm_{max_steps}",
+                f"span_corruption_{max_steps}",
                 *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
             ]
         for t0_adapt_from in PRETRAIN_STEPS:
+            max_steps = t0_adapt_from + T0_ADAPT_STEPS
             suffixes += [
-                f"lm_t0_adapt_{t0_adapt_from}",
-                f"span_corruption_t0_adapt_{t0_adapt_from}",
-                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}" for lm_adapt in LM_ADAPT_FROM]
+                f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
+                f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
+                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
             ]
 
         for i, suffix in enumerate(suffixes):
@@ -223,7 +226,7 @@ def main():
         ("arc_easy", "acc"),
         ("boolq", "acc"),
         ("copa", "acc"),
-        ("headqa", "acc"),
+        ("headqa_en", "acc"),
         ("hellaswag", "acc"),
         ("lambada", "acc"),
         ("logiqa", "acc"),
