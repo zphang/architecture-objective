@@ -61,9 +61,13 @@ def get_experiment_name(key: str):
     return name
 
 RANDOM_BASELINE={
+    "anli_r1_acc": 1/3,
+    "anli_r2_acc": 1 / 3,
+    "anli_r3_acc": 1 / 3,
     "arc_challenge_acc": 0.2502, # Source: https://arxiv.org/pdf/1803.05457.pdf table 6
     "arc_easy_acc": 0.2502, # Source: https://arxiv.org/pdf/1803.05457.pdf table 6
     "boolq_acc": 0.5,
+    "cb_acc": 0.5,
     "copa_acc": 0.5,
     "headqa_acc": 0.25,
     "headqa_en_acc": 0.25,
@@ -196,9 +200,13 @@ def main():
 
     # Get evaluation_metric
     evaluation_metrics = [
+        # ("anli_r1", "acc"),
+        # ("anli_r2", "acc"),
+        # ("anli_r3", "acc"),
         ("arc_challenge", "acc"),
         ("arc_easy", "acc"),
         ("boolq", "acc"),
+        # ("cb", "en"),
         ("copa", "acc"),
         ("headqa_en", "acc"),
         ("hellaswag", "acc"),
