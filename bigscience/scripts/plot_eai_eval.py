@@ -11,8 +11,17 @@ from matplotlib import pyplot as plt
 
 def get_args():
     parser = ArgumentParser()
+    parser.add_argument('--all', action="store_true", help="Plot all results in a single plot")
+    parser.add_argument('--per-arch', action="store_true", help="Plot results grouped by architectures")
+    parser.add_argument('--per-objective', action="store_true", help="Plots results grouped by objectives")
+    parser.add_argument('--per-t0-adapted', action="store_true", help="Plots only T0 adapted models")
     parser.add_argument('--normalised', action="store_true", help="Whether to plot normalised scores or not. Each task has a random baseline and we compute how far away we're from that baseline")
-    return parser.parse_args()
+
+    args = parser.parse_args()
+
+    assert args.all or args.per_arch or args.per_objective or args.per_t0_adapted
+
+    return args
 
 def load_data(dir_path: Path):
     def remove_eai_eval(filename):
@@ -88,6 +97,7 @@ def normalise_score(score, evaluation_name, metric_name):
     return (score - RANDOM_BASELINE[key]) / (1 - RANDOM_BASELINE[key])
 
 def plot_tasks(data, evaluation_metrics):
+    data, sorted_experiment_keys = data
     fig, axs = plt.subplots(3, 10)
     agg_fig, agg_axs = plt.subplots(1,3)
     axs = axs.flatten()
@@ -115,42 +125,6 @@ def plot_tasks(data, evaluation_metrics):
         0, len(data),
         label="Random"
     )
-
-    # sort experiments
-    LM_ADAPT_FROM = [28000, 30000]
-    PRETRAIN_STEPS = [32768, 65536, 131072]
-    T0_ADAPT_STEPS = 5000
-    def key_architecture(experiment_name):
-        if experiment_name[0] == 'c':
-            return 0
-        elif experiment_name[0] == 'n':
-            return 1
-        elif experiment_name[0] == 'e':
-            return 2
-        else:
-            raise NotImplementedError
-
-    def key_objective(experiment_name):
-        suffixes = []
-        for max_steps in PRETRAIN_STEPS:
-            suffixes += [
-                f"lm_{max_steps}",
-                f"span_corruption_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
-            ]
-        for t0_adapt_from in PRETRAIN_STEPS:
-            max_steps = t0_adapt_from + T0_ADAPT_STEPS
-            suffixes += [
-                f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
-                f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
-            ]
-
-        for i, suffix in enumerate(suffixes):
-            if experiment_name.endswith(suffix):
-                return i
-        raise NotImplementedError(f"{experiment_name}")
-    sorted_experiment_keys = sorted(data.keys(), key=lambda x: (key_objective(x), key_architecture(x)))
 
     for i, experiment_key in enumerate(sorted_experiment_keys):
         experiment_name = get_experiment_name(experiment_key)
@@ -254,7 +228,60 @@ def main():
     # Plot data
     # plot_bar(data, evaluation_metrics, args.normalised)
 
-    plot_tasks(data, evaluation_metrics)
+
+    # sort experiments
+    LM_ADAPT_FROM = [28000, 30000]
+    PRETRAIN_STEPS = [32768, 65536, 131072]
+    T0_ADAPT_STEPS = 5000
+    def key_architecture(experiment_name):
+        if experiment_name[0] == 'c':
+            return 0
+        elif experiment_name[0] == 'n':
+            return 1
+        elif experiment_name[0] == 'e':
+            return 2
+        else:
+            raise NotImplementedError
+
+    def key_objective(experiment_name):
+        suffixes = []
+        for max_steps in PRETRAIN_STEPS:
+            suffixes += [
+                f"lm_{max_steps}",
+                f"span_corruption_{max_steps}",
+                *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
+            ]
+        for t0_adapt_from in PRETRAIN_STEPS:
+            max_steps = t0_adapt_from + T0_ADAPT_STEPS
+            suffixes += [
+                f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
+                f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
+                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
+            ]
+
+        for i, suffix in enumerate(suffixes):
+            if experiment_name.endswith(suffix):
+                return i
+        raise NotImplementedError(f"{experiment_name}")
+    sorted_experiment_keys = sorted(data.keys(), key=lambda x: (key_objective(x), key_architecture(x)))
+
+    if args.all:
+        plot_tasks((data, sorted_experiment_keys), evaluation_metrics)
+
+    def plot_per_group(group_fn):
+        t5x_objective_keys = set(group_fn(x) for x in sorted_experiment_keys)
+        for group_id in t5x_objective_keys:
+            t5x_experiments_per_group = [x for x in sorted_experiment_keys if group_id == group_fn(x)]
+            plot_tasks((data, t5x_experiments_per_group), evaluation_metrics)
+
+    if args.per_objective:
+        plot_per_group(key_objective)
+    if args.per_arch:
+        plot_per_group(key_architecture)
+    if args.per_t0_adapted:
+        def key_is_t0_adapted(experiment_name):
+            return "_t0_adapt_" in experiment_name
+        plot_per_group(key_is_t0_adapted)
     plt.show()
 
 if __name__ == "__main__":
