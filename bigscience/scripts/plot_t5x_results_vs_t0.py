@@ -56,7 +56,10 @@ def get_experiment_name(filename: str):
     if name[:3] == "CD_":
         name = re.sub(r"lm_adapt_([0-9]*)", r"FLM(\1)", name)
     elif name[:4] == "NCD_" or name[:3] == "ED_":
-        name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
+        if "flm_adapt" in name:
+            name = re.sub(r"flm_adapt_([0-9]*)", r"FLM AS CD(\1)", name)
+        else:
+            name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
     else:
         raise NotImplementedError
     name = name.replace("_", " + ")
@@ -205,7 +208,7 @@ def main():
     if not (t0_results_dir / "all_datasets_and_runs.csv").exists():
         subprocess.run(["gsutil", "cp", "gs://bigscience/experiment_d/aux_experiments/all_datasets_and_runs.csv", t0_results_dir])
     # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/t0_eval ../results/t0_eval/t5x
-    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/t0_eval", t5x_results_dir])
+    subprocess.run(["gsutil", "-m", "rsync", "-rd", "-x", ".*inference_eval", "gs://bigscience-t5x/arch_objective_exps_v2/t0_eval", t5x_results_dir])
 
     # Load results
     t0_data = load_t0_results(t0_results_dir / "all_datasets_and_runs.csv")
@@ -215,7 +218,7 @@ def main():
     # We group experiments by:
     #  - objective
     #  - architecture
-    LM_ADAPT_FROM = [28000, 30000]
+    LM_ADAPT_FROM = [28000, 30000, 58768]
     PRETRAIN_STEPS = [32768, 65536, 131072]
     T0_ADAPT_STEPS = 5000
     def key_architecture(experiment_name):
@@ -232,14 +235,16 @@ def main():
         for max_steps in PRETRAIN_STEPS:
             suffixes += [
                 f"lm_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
+                *[f"{lm_type}_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for
+                  lm_type in ["_lm", "_flm", "_plm"]]
             ]
         for t0_adapt_from in PRETRAIN_STEPS:
             max_steps = t0_adapt_from + T0_ADAPT_STEPS
             suffixes += [
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
+                *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for
+                  lm_type in ["_lm", "_flm", "_plm"]]
             ]
 
         for i, suffix in enumerate(suffixes):

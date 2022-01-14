@@ -2,6 +2,7 @@ import json
 import re
 import subprocess
 from argparse import ArgumentParser
+from collections import namedtuple
 from pathlib import Path
 
 import numpy as np
@@ -16,6 +17,7 @@ def get_args():
     parser.add_argument('--per-objective', action="store_true", help="Plots results grouped by objectives")
     parser.add_argument('--per-t0-adapted', action="store_true", help="Plots only T0 adapted models")
     parser.add_argument('--normalised', action="store_true", help="Whether to plot normalised scores or not. Each task has a random baseline and we compute how far away we're from that baseline")
+    parser.add_argument('--only-t0-eval', action="store_true", help="Only plot the results from the t0 evaluation set")
 
     args = parser.parse_args()
 
@@ -54,7 +56,10 @@ def get_experiment_name(key: str):
     if name[:3] == "CD_":
         name = re.sub(r"lm_adapt_([0-9]*)", r"FLM(\1)", name)
     elif name[:4] == "NCD_" or name[:3] == "ED_":
-        name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
+        if "flm_adapt" in name:
+            name = re.sub(r"flm_adapt_([0-9]*)", r"FLM AS CD(\1)", name)
+        else:
+            name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
     else:
         raise NotImplementedError
     name = name.replace("_", " + ")
@@ -102,13 +107,14 @@ def normalise_score(score, evaluation_name, metric_name):
 
 def plot_tasks(data, evaluation_metrics):
     data, sorted_experiment_keys = data
+
     fig, axs = plt.subplots(3, 10)
     agg_fig, agg_axs = plt.subplots(1,3)
     axs = axs.flatten()
     agg_axs = agg_axs.flatten()
 
     assert len(axs) >= len(evaluation_metrics)
-    for (evaluation_name, metric_name), ax in zip(evaluation_metrics, axs):
+    for (evaluation_name, metric_name, _), ax in zip(evaluation_metrics, axs):
         key = f"{evaluation_name}_{metric_name}"
         ax.set_title(key)
         ax.axhline(
@@ -133,10 +139,10 @@ def plot_tasks(data, evaluation_metrics):
     for i, experiment_key in enumerate(sorted_experiment_keys):
         experiment_name = get_experiment_name(experiment_key)
         experiment = data[experiment_key]
-        scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name) in evaluation_metrics]
+        scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name, _) in evaluation_metrics]
         normalised_score = [
             normalise_score(experiment[evaluation_name][metric_name], evaluation_name, metric_name)
-            for (evaluation_name, metric_name) in evaluation_metrics
+            for (evaluation_name, metric_name, _) in evaluation_metrics
         ]
 
         for j, score in enumerate(scores):
@@ -163,11 +169,11 @@ def plot_bar(data, evaluation_metrics, normalised):
         if normalised:
             normalised_scores = [
                 normalise_score(experiment[evaluation_name][metric_name], evaluation_name, metric_name)
-                for (evaluation_name, metric_name) in evaluation_metrics
+                for (evaluation_name, metric_name, _) in evaluation_metrics
             ]
             ax.bar(ind + i * width, normalised_scores, width, label=experiment_name)
         else:
-            scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name) in evaluation_metrics]
+            scores = [experiment[evaluation_name][metric_name] for (evaluation_name, metric_name, _) in evaluation_metrics]
             ax.bar(ind + i * width, scores, width, label=experiment_name)
 
     # add some text for labels, title and axes ticks
@@ -178,11 +184,47 @@ def plot_bar(data, evaluation_metrics, normalised):
     ax.set_title('EAI harness')
     ax.set_xticks(ind + len(data.keys()) / 2 * width)
     ax.set_xticklabels(
-        (f"{evaluation_name}_{metric_name}" for evaluation_name, metric_name in evaluation_metrics),
+        (f"{evaluation_name}_{metric_name}" for evaluation_name, metric_name, _ in evaluation_metrics),
         rotation=80,
         ha="right"
     )
     ax.legend()
+
+# All evaluation tasks available: (dataset_name, metric_name, is_t0_eval)
+Evaluation = namedtuple('Evaluation', ['task', 'metric', "is_t0_eval"])
+ALL_EVALUATION = [
+    Evaluation("anli_r1", "acc", True),
+    Evaluation("anli_r2", "acc", True),
+    Evaluation("anli_r3", "acc", True),
+    Evaluation("arc_challenge", "acc", False),
+    Evaluation("arc_easy", "acc", False),
+    Evaluation("boolq", "acc", False),
+    # Evaluation("cb", "acc", True), https://github.com/EleutherAI/lm-evaluation-harness/pull/254
+    Evaluation("copa", "acc", True),
+    Evaluation("headqa_en", "acc", False),
+    Evaluation("hellaswag", "acc", True),
+    Evaluation("lambada", "acc", False),
+    Evaluation("logiqa", "acc", False),
+    Evaluation("mathqa", "acc", False),
+    Evaluation("mrpc", "acc", False),
+    Evaluation("multirc", "acc", False),
+    Evaluation("openbookqa", "acc", False),
+    Evaluation("piqa", "acc", False),
+    Evaluation("prost", "acc", False),
+    Evaluation("pubmedqa", "acc", False),
+    Evaluation("qnli", "acc", False),
+    Evaluation("qqp", "acc", False),
+    Evaluation("race", "acc", False),
+    Evaluation("rte", "acc", True),
+    Evaluation("sciq", "acc", False),
+    Evaluation("sst", "acc", False),
+    Evaluation("triviaqa", "acc", False),
+    Evaluation("webqs", "acc", False),
+    Evaluation("wic", "acc", True),
+    Evaluation("winogrande", "acc", True),
+    Evaluation("wnli", "acc", False),
+    Evaluation("wsc", "acc", True),
+]
 
 def main():
     args = get_args()
@@ -193,52 +235,23 @@ def main():
 
     # Update data locally
     # gsutil rsync -rd gs://bigscience-t5x/arch_objective_exps_v2/eai_eval ../results/eai_eval
-    subprocess.run(["gsutil", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/eai_eval", results_dir])
+    subprocess.run(["gsutil", "-m", "rsync", "-rd", "gs://bigscience-t5x/arch_objective_exps_v2/eai_eval", results_dir])
 
     # Load data
     data = load_data(results_dir)
 
     # Get evaluation_metric
-    evaluation_metrics = [
-        ("anli_r1", "acc"),
-        ("anli_r2", "acc"),
-        ("anli_r3", "acc"),
-        ("arc_challenge", "acc"),
-        ("arc_easy", "acc"),
-        ("boolq", "acc"),
-        # ("cb", "acc"),
-        ("copa", "acc"),
-        ("headqa_en", "acc"),
-        ("hellaswag", "acc"),
-        ("lambada", "acc"),
-        ("logiqa", "acc"),
-        ("mathqa", "acc"),
-        ("mrpc", "acc"),
-        ("multirc", "acc"),
-        ("openbookqa", "acc"),
-        ("piqa", "acc"),
-        ("prost", "acc"),
-        ("pubmedqa", "acc"),
-        ("qnli", "acc"),
-        ("qqp", "acc"),
-        ("race", "acc"),
-        ("rte", "acc"),
-        ("sciq", "acc"),
-        ("sst", "acc"),
-        ("triviaqa", "acc"),
-        ("webqs", "acc"),
-        ("wic", "acc"),
-        ("winogrande", "acc"),
-        ("wnli", "acc"),
-        ("wsc", "acc"),
-    ]
+    if args.only_t0_eval:
+        evaluation_metrics = [elt for elt in ALL_EVALUATION if elt.is_t0_eval]
+    else:
+        evaluation_metrics = ALL_EVALUATION
 
     # Plot data
     # plot_bar(data, evaluation_metrics, args.normalised)
 
 
     # sort experiments
-    LM_ADAPT_FROM = [28000, 30000]
+    LM_ADAPT_FROM = [28000, 30000, 58768]
     PRETRAIN_STEPS = [32768, 65536, 131072]
     T0_ADAPT_STEPS = 5000
     def key_architecture(experiment_name):
@@ -257,14 +270,15 @@ def main():
             suffixes += [
                 f"lm_{max_steps}",
                 f"span_corruption_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM],
+                *[f"{lm_type}_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for
+                  lm_type in ["_lm", "_flm", "_plm"]]
             ]
         for t0_adapt_from in PRETRAIN_STEPS:
             max_steps = t0_adapt_from + T0_ADAPT_STEPS
             suffixes += [
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
-                *[f"lm_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM]
+                *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for lm_type in ["_lm", "_flm", "_plm"]]
             ]
 
         for i, suffix in enumerate(suffixes):

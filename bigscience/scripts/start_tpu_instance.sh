@@ -28,3 +28,6 @@ gcloud alpha compute tpus tpu-vm create ${TPU_NAME} --zone ${ZONE} --accelerator
 
 # Connect to your TPU
 # gcloud alpha compute tpus tpu-vm ssh enc_dec_c4_span_corruption-tpu --zone us-central2-b
+
+# Connect to a specific worker
+# gcloud alpha compute tpus tpu-vm ssh enc_dec_c4_span_corruption-tpu --zone us-central2-b --worker=1
