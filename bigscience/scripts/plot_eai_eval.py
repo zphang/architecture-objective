@@ -200,13 +200,13 @@ def main():
 
     # Get evaluation_metric
     evaluation_metrics = [
-        # ("anli_r1", "acc"),
-        # ("anli_r2", "acc"),
-        # ("anli_r3", "acc"),
+        ("anli_r1", "acc"),
+        ("anli_r2", "acc"),
+        ("anli_r3", "acc"),
         ("arc_challenge", "acc"),
         ("arc_easy", "acc"),
         ("boolq", "acc"),
-        # ("cb", "en"),
+        # ("cb", "acc"),
         ("copa", "acc"),
         ("headqa_en", "acc"),
         ("hellaswag", "acc"),
