@@ -219,8 +219,7 @@ def main():
     #  - objective
     #  - architecture
     LM_ADAPT_FROM = [28000, 30000, 58768]
-    PRETRAIN_STEPS = [32768, 65536, 131072]
-    T0_ADAPT_STEPS = 5000
+    PRETRAIN_AND_T0_ADAPT_STEPS = [(32768, 37768), (65536, 70536), (131072, 141072)]
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
             return 0
@@ -232,14 +231,13 @@ def main():
             raise NotImplementedError
     def key_objective(experiment_name):
         suffixes = []
-        for max_steps in PRETRAIN_STEPS:
+        for max_steps,_ in PRETRAIN_AND_T0_ADAPT_STEPS:
             suffixes += [
                 f"lm_{max_steps}",
                 *[f"{lm_type}_adapt_{lm_adapt}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for
                   lm_type in ["_lm", "_flm", "_plm"]]
             ]
-        for t0_adapt_from in PRETRAIN_STEPS:
-            max_steps = t0_adapt_from + T0_ADAPT_STEPS
+        for t0_adapt_from, max_steps in PRETRAIN_AND_T0_ADAPT_STEPS:
             suffixes += [
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
