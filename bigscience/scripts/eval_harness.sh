@@ -4,7 +4,7 @@ ORIGINAL_EXPERIMENT_NAME=$1
 
 if [[ $ORIGINAL_EXPERIMENT_NAME == *t0_adapt* ]]
 then
-  CHECKPOINT_STEP=136072 # 131072 (pretrain) + 5000 (t0 adapt)
+  CHECKPOINT_STEP=141072 # 131072 (pretrain) + 10000 (t0 adapt)
 else
   CHECKPOINT_STEP=131072
 fi
