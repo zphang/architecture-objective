@@ -34,7 +34,7 @@ def process_ps_results(ps_resuls:dict, to_clipboard: bool = True) -> str:
 
     for task in formatted_results:
         results = list(formatted_results[task].values())
-        acc_avg, acc_std, acc_best = np.mean(results) / 100, np.std(results) / 100, max(results) / 100
+        acc_avg, acc_std, acc_best = np.median(results) / 100, np.std(results) / 100, max(results) / 100
         spreadsheet_content += f"{acc_avg}\t{acc_std}\n{acc_best}\n"
 
     if to_clipboard:
