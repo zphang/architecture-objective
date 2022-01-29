@@ -240,6 +240,7 @@ def main():
         for t0_adapt_from, max_steps in PRETRAIN_AND_T0_ADAPT_STEPS:
             suffixes += [
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
+                f"lm_t0_adapt_nc_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
                 *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for
                   lm_type in ["_lm", "_flm", "_plm"]]

@@ -52,14 +52,15 @@ def get_experiment_name(key: str):
     name = re.sub(r"^c_dec", 'CD', name)
     name = name.replace("full_lm", "FLM")
     name = name.replace("prefix_lm", "PLM")
-    name = re.sub(r"t0_adapt_([0-9]*)", r"T0(\1)", name)
+    name = re.sub(r"t0_adapt_([0-9]+)", r"T0(\1)", name)
     if name[:3] == "CD_":
-        name = re.sub(r"lm_adapt_([0-9]*)", r"FLM(\1)", name)
+        name = re.sub(r"lm_adapt_([0-9]+)", r"FLM(\1)", name)
+        name = re.sub(r"t0_adapt_nc_([0-9]+)", r"T0 AS NC (\1)", name)
     elif name[:4] == "NCD_" or name[:3] == "ED_":
         if "flm_adapt" in name:
-            name = re.sub(r"flm_adapt_([0-9]*)", r"FLM AS CD(\1)", name)
+            name = re.sub(r"flm_adapt_([0-9]+)", r"FLM AS CD(\1)", name)
         else:
-            name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
+            name = re.sub(r"lm_adapt_([0-9]+)", r"PLM(\1)", name)
     else:
         raise NotImplementedError
     name = name.replace("_", " + ")
@@ -108,7 +109,7 @@ def normalise_score(score, evaluation_name, metric_name):
 def plot_tasks(data, evaluation_metrics):
     data, sorted_experiment_keys = data
 
-    fig, axs = plt.subplots(3, 10)
+    fig, axs = plt.subplots(3, 11)
     agg_fig, agg_axs = plt.subplots(1,3)
     axs = axs.flatten()
     agg_axs = agg_axs.flatten()
@@ -199,7 +200,7 @@ ALL_EVALUATION = [
     Evaluation("arc_challenge", "acc", False),
     Evaluation("arc_easy", "acc", False),
     Evaluation("boolq", "acc", False),
-    # Evaluation("cb", "acc", True), https://github.com/EleutherAI/lm-evaluation-harness/pull/254
+    Evaluation("cb", "acc", True), # https://github.com/EleutherAI/lm-evaluation-harness/pull/254
     Evaluation("copa", "acc", True),
     Evaluation("headqa_en", "acc", False),
     Evaluation("hellaswag", "acc", True),
@@ -275,6 +276,7 @@ def main():
         for t0_adapt_from, max_steps in PRETRAIN_AND_T0_ADAPT_STEPS:
             suffixes += [
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
+                f"lm_t0_adapt_nc_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
                 *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for lm_type in ["_lm", "_flm", "_plm"]]
             ]
