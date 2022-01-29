@@ -2,6 +2,7 @@ python3 -c "import jax; print(jax.device_count()); print(jax.local_device_count(
 
 # Model dir to save logs, ckpts, etc. in "gs://model_dir" format.
 ORIGINAL_EXPERIMENT_NAME=$1
+OPPOSITE_ARCHITECTURE=$2
 
 if [[ $ORIGINAL_EXPERIMENT_NAME == *t0_adapt* ]]
 then
@@ -23,21 +24,41 @@ mkdir -p $LOGS_PATH
 
 if [[ $ORIGINAL_EXPERIMENT_NAME == c_dec* ]]
 then
-  MODEL_GIN_FILE=c_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=c_dec_xxl.gin
+  else
+    echo "Using opposite architecture"
+    MODEL_GIN_FILE=nc_dec_xxl.gin
+  fi
 fi
 if [[ $ORIGINAL_EXPERIMENT_NAME == nc_dec* ]]
 then
-  MODEL_GIN_FILE=nc_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=nc_dec_xxl.gin
+  else
+    echo "Using opposite architecture"
+    MODEL_GIN_FILE=c_dec_xxl.gin
+  fi
 fi
 if [[ $ORIGINAL_EXPERIMENT_NAME == enc_dec* ]]
 then
-  MODEL_GIN_FILE=enc_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=enc_dec_xxl.gin
+  else
+    echo "Cannot have opposite architecture for enc dec."
+    exit 1
+  fi
 fi
 if [[ $MODEL_GIN_FILE == "" ]]
 then
   echo "Incorrect experiment name $ORIGINAL_EXPERIMENT_NAME, does not start with c_dec/nc_dec/enc_dec"
   exit
 fi
+
+echo "Load model gin: $MODEL_GIN_FILE"
 
 MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
 # EVAL_OUTPUT_DIR=/home/thomas/arch_objective_exps_v2/$EXPERIMENT_NAME

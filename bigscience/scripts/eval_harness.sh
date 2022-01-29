@@ -1,6 +1,8 @@
 pushd ~/code/t5x
 
 ORIGINAL_EXPERIMENT_NAME=$1
+# The idea is whether to load the nc_dec as c_dec or vice-versa. "true" will switch
+OPPOSITE_ARCHITECTURE=$2
 
 if [[ $ORIGINAL_EXPERIMENT_NAME == *t0_adapt* ]]
 then
@@ -15,21 +17,41 @@ mkdir -p $LOGS_PATH
 
 if [[ $ORIGINAL_EXPERIMENT_NAME == c_dec* ]]
 then
-  MODEL_GIN_FILE=c_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=c_dec_xxl.gin
+  else
+    echo "Using opposite architecture"
+    MODEL_GIN_FILE=nc_dec_xxl.gin
+  fi
 fi
 if [[ $ORIGINAL_EXPERIMENT_NAME == nc_dec* ]]
 then
-  MODEL_GIN_FILE=nc_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=nc_dec_xxl.gin
+  else
+    echo "Using opposite architecture"
+    MODEL_GIN_FILE=c_dec_xxl.gin
+  fi
 fi
 if [[ $ORIGINAL_EXPERIMENT_NAME == enc_dec* ]]
 then
-  MODEL_GIN_FILE=enc_dec_xxl.gin
+  if [[ $OPPOSITE_ARCHITECTURE != true ]]
+  then
+    MODEL_GIN_FILE=enc_dec_xxl.gin
+  else
+    echo "Cannot have opposite architecture for enc dec."
+    exit 1
+  fi
 fi
 if [[ $MODEL_GIN_FILE == "" ]]
 then
   echo "Incorrect experiment name $ORIGINAL_EXPERIMENT_NAME, does not start with c_dec/nc_dec/enc_dec"
   exit
 fi
+
+echo "Load model gin: $MODEL_GIN_FILE"
 
 EXPERIMENT_NAME=$ORIGINAL_EXPERIMENT_NAME"_eai_eval_"$CHECKPOINT_STEP
 MODEL_GIN_FILE=bigscience/gins/$MODEL_GIN_FILE
