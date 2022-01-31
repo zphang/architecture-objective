@@ -222,7 +222,7 @@ def main():
     #  - objective
     #  - architecture
     LM_ADAPT_FROM = [28000, 30000, 58768]
-    PRETRAIN_AND_T0_ADAPT_STEPS = [(32768, 37768), (65536, 70536), (131072, 141072)]
+    PRETRAIN_AND_T0_ADAPT_STEPS = [(32768, 37768), (65536, 70536), (131072, 141072), (169984, 179984), (196608, 206608)]
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
             return 0
@@ -273,7 +273,7 @@ def main():
         plot_per_group(key_architecture)
     if args.per_t0_adapted:
         def key_is_t0_adapted(experiment_name):
-            return "_t0_adapt_" in experiment_name
+            return "_t0" in experiment_name
         plot_per_group(key_is_t0_adapted)
 
     plt.show()

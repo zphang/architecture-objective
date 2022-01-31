@@ -305,7 +305,7 @@ def main():
         plot_per_group(key_architecture)
     if args.per_t0_adapted:
         def key_is_t0_adapted(experiment_name):
-            return "_t0_adapt_" in experiment_name
+            return "_t0" in experiment_name
         plot_per_group(key_is_t0_adapted)
     plt.show()
 
