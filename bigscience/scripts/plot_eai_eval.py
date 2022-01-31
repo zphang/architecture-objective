@@ -56,6 +56,8 @@ def get_experiment_name(key: str):
     if name[:3] == "CD_":
         name = re.sub(r"lm_adapt_([0-9]+)", r"FLM(\1)", name)
         name = re.sub(r"t0_adapt_nc_([0-9]+)", r"T0 AS NC (\1)", name)
+        name = re.sub(r"nc_sc_([0-9]+)", r"SC as NC(\1)", name)
+        name = re.sub(r"nc_t0_([0-9]+)", r"T0 as NC(\1)", name)
     elif name[:4] == "NCD_" or name[:3] == "ED_":
         if "flm_adapt" in name:
             name = re.sub(r"flm_adapt_([0-9]+)", r"FLM AS CD(\1)", name)
@@ -253,7 +255,7 @@ def main():
 
     # sort experiments
     LM_ADAPT_FROM = [28000, 30000, 58768]
-    PRETRAIN_AND_T0_ADAPT_STEPS = [(32768, 37768), (65536, 70536), (131072, 141072)]
+    PRETRAIN_AND_T0_ADAPT_STEPS = [(32768, 37768), (65536, 70536), (131072, 141072), (169984, 179984), (196608, 206608)]
     def key_architecture(experiment_name):
         if experiment_name[0] == 'c':
             return 0
@@ -278,7 +280,8 @@ def main():
                 f"lm_t0_adapt_{t0_adapt_from}_{max_steps}",
                 f"lm_t0_adapt_nc_{t0_adapt_from}_{max_steps}",
                 f"span_corruption_t0_adapt_{t0_adapt_from}_{max_steps}",
-                *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for lm_type in ["_lm", "_flm", "_plm"]]
+                *[f"{lm_type}_adapt_{lm_adapt}_t0_adapt_{t0_adapt_from}_{max_steps}" for lm_adapt in LM_ADAPT_FROM for lm_type in ["_lm", "_flm", "_plm"]],
+                f"-nc_sc_{t0_adapt_from}-nc_t0_{max_steps}"
             ]
 
         for i, suffix in enumerate(suffixes):
