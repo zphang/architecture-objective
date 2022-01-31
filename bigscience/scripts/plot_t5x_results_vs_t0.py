@@ -52,14 +52,15 @@ def get_experiment_name(filename: str):
     name = re.sub(r"^c_dec", 'CD', name)
     name = name.replace("full_lm", "FLM")
     name = name.replace("prefix_lm", "PLM")
-    name = re.sub(r"t0_adapt_([0-9]*)", r"T0(\1)", name)
+    name = re.sub(r"t0_adapt_([0-9]+)", r"T0(\1)", name)
     if name[:3] == "CD_":
-        name = re.sub(r"lm_adapt_([0-9]*)", r"FLM(\1)", name)
+        name = re.sub(r"lm_adapt_([0-9]+)", r"FLM(\1)", name)
+        name = re.sub(r"t0_adapt_nc_([0-9]+)", r"T0 AS NC (\1)", name)
     elif name[:4] == "NCD_" or name[:3] == "ED_":
         if "flm_adapt" in name:
-            name = re.sub(r"flm_adapt_([0-9]*)", r"FLM AS CD(\1)", name)
+            name = re.sub(r"flm_adapt_([0-9]+)", r"FLM AS CD(\1)", name)
         else:
-            name = re.sub(r"lm_adapt_([0-9]*)", r"PLM(\1)", name)
+            name = re.sub(r"lm_adapt_([0-9]+)", r"PLM(\1)", name)
     else:
         raise NotImplementedError
     name = name.replace("_", " + ")
