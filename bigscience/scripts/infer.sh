@@ -6,7 +6,7 @@ CHECKPOINT_DIR=$1
 EXPERIMENT_DIR=$(dirname "$CHECKPOINT_DIR")
 EXPERIMENT_NAME=$(basename "$EXPERIMENT_DIR")
 # directory where the T5X repo is cloned.
-T5X_DIR="~/code/t5x"
+T5X_DIR="~/code/architecture-objective"
 export PYTHONPATH=${T5X_DIR}/bigscience/gins
 
 # Logs

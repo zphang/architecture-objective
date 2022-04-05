@@ -7,7 +7,7 @@ CHECKPOINT_STEP=$2
 OPPOSITE_ARCHITECTURE=$3
 
 # directory where the T5X repo is cloned.
-T5X_DIR="~/code/t5x"
+T5X_DIR="~/code/architecture-objective"
 export PYTHONPATH=${T5X_DIR}/bigscience/gins
 
 # Logs

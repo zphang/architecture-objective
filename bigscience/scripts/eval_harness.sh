@@ -1,4 +1,4 @@
-pushd ~/code/t5x
+pushd ~/code/architecture-objective
 
 ORIGINAL_EXPERIMENT_NAME=$1
 # The idea is whether to load the nc_dec as c_dec or vice-versa. "true" will switch
