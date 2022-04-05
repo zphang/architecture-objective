@@ -1,3 +1,7 @@
+# Architecture-objective
+
+// TODO (@thomasw21): Summary + link to paper + link to checkpoints.
+
 # T5X
 
 T5X is a modular, composable, research-friendly framework for high-performance,
