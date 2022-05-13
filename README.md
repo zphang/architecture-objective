@@ -1,6 +1,23 @@
-# Architecture-objective
+# What Language Model Architecture and Pretraining Objective Work Best for Zero-Shot Generalization?
 
-// TODO (@thomasw21): Summary + link to paper + link to checkpoints.
+Large pretrained Transformer language models have been shown to exhibit zero-shot generalization, i.e. they can perform a wide variety of tasks that they were not explicitly trained on. However, the architectures and pretraining objectives used across state-of-the-art models differ significantly, and there has been limited systematic comparison of these factors. In this work, we present a large-scale evaluation of modeling choices and their impact on zero-shot generalization. In particular, we focus on text-to-text models and experiment with three model architectures (causal/non-causal decoder-only and encoder-decoder), trained with two different pretraining objectives (autoregressive and masked language modeling), and evaluated with and without multitask prompted finetuning. We train models with over 5 billion parameters for more than 170 billion tokens, thereby increasing the likelihood that our conclusions will transfer to even larger scales. Our experiments show that causal decoder-only models trained on an autoregressive language modeling objective exhibit the strongest zero-shot generalization after purely unsupervised pretraining. However, models with non-causal visibility on their input trained with a masked language modeling objective followed by multitask finetuning perform the best among our experiments. We therefore consider the adaptation of pretrained models across architectures and objectives. We find that pretrained non-causal decoder models can be adapted into performant generative causal decoder models, using autoregressive language modeling as a downstream task. Furthermore, we find that pretrained causal decoder models can be efficiently adapted into non-causal decoder models, ultimately achieving competitive performance after multitask finetuning. 
+
+Full paper is available at: https://arxiv.org/abs/2204.05832
+
+## Checkpoints
+// TODO (@thomasw21):  link to checkpoints.
+
+## How to cite
+
+    @article{wang2022language,
+      title={What Language Model Architecture and Pretraining Objective Work Best for Zero-Shot Generalization?},
+      author={Wang, Thomas and Roberts, Adam and Hesslow, Daniel and Scao, Teven Le and Chung, Hyung Won and Beltagy, Iz and Launay, Julien and Raffel, Colin},
+      journal={arXiv preprint arXiv:2204.05832},
+      year={2022}
+    }
+
+
+
 
 # T5X
 
