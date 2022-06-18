@@ -22,12 +22,17 @@ pip3 install -r requirements.txt
 pip3 install --ignore-requires-python -e . #needed because `promptsource` forces the use of python 3.7
 popd
 
-git clone https://github.com/bigscience-workshop/architecture-objective.git
+git clone https://github.com/zphang/architecture-objective.git
 pushd architecture-objective
 pip3 install -e .
 popd
 
 git clone https://github.com/EleutherAI/lm-evaluation-harness.git
+pushd lm-evaluation-harness
+pip3 install -e .
+popd
+
+git clone https://github.com/uSaiPrashanth/FLAN.git
 pushd lm-evaluation-harness
 pip3 install -e .
 popd

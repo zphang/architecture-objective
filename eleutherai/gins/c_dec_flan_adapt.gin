@@ -13,7 +13,6 @@ include "bigscience/gins/t0_adapter_base.gin" # This overrides some default conf
 TASK_FEATURE_LENGTHS = {"inputs": 1024, "targets": 256}
 MIXTURE_OR_TASK_NAME = "flan_superglue_split_10templates_55train_tasks_train"
 TRAIN_STEPS = 140672
-# BATCH_SIZE = 2048
-BATCH_SIZE = 256
+BATCH_SIZE = 2048
 trainer.Trainer.num_microbatches = 32
 utils.SaveCheckpointConfig.period = 200
