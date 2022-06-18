@@ -6,8 +6,9 @@ from promptsource import seqio_tasks
 
 # --- Seqio ---
 seqio.add_global_cache_dirs([
-    'gs://bigscience-t5x/seqio_cached_tasks',
-    'gs://bigscience-t5x/seqio_cached_tasks/t0-adapt'
+    # 'gs://bigscience-t5x/seqio_cached_tasks',
+    # 'gs://bigscience-t5x/seqio_cached_tasks/t0-adapt'
+    "gs://neo-datasets/zphang/multitask/t0_seqio/v2/",
 ])
 
 TaskRegistry = seqio.TaskRegistry
