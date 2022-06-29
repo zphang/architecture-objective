@@ -1,0 +1,18 @@
+from __gin__ import dynamic_registration
+
+from t5x import models
+from t5x import utils
+from t5x import trainer
+import seqio
+import flanmixture_nli_paraphrase
+
+include "bigscience/gins/c_dec_xxl.gin"
+include "t5x/configs/runs/finetune.gin"
+include "bigscience/gins/t0_adapter_base.gin" # This overrides some default config in `t5x/configs/runs/finetune.gin`
+
+TASK_FEATURE_LENGTHS = {"inputs": 1024, "targets": 256}
+MIXTURE_OR_TASK_NAME = "flan_split_paraphrase_entailment_train"
+TRAIN_STEPS = 141072
+BATCH_SIZE = 2048
+trainer.Trainer.num_microbatches = 32
+utils.SaveCheckpointConfig.period = 500

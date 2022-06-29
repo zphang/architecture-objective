@@ -32,10 +32,7 @@ pushd lm-evaluation-harness
 pip3 install -e .
 popd
 
-git clone https://github.com/uSaiPrashanth/FLAN.git
-pushd lm-evaluation-harness
-pip3 install -e .
-popd
+git clone https://github.com/zphang/FLAN.git
 
 pip3 install jax==0.2.27
 pip3 install flax==0.4.0
